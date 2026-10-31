@@ -2,8 +2,8 @@
   "name": "Hours of Service Trainer",
   "short_name": "HOS Trainer",
   "description": "Learn Canadian federal Hours of Service rules (south of 60°): duty statuses, daily limits, cycles, drawing the daily log and spotting violations. A learning aid by Gamache Apps.",
-  "id": "./",
-  "start_url": "./index.html",
+  "id": "/MyHoursOfServiceApp/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -11,16 +11,19 @@
   "theme_color": "#111827",
   "lang": "en-CA",
   "dir": "ltr",
-  "categories": ["education", "productivity"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
@@ -28,25 +31,37 @@
   ],
   "screenshots": [
     {
-      "src": "screenshot1.png",
+      "src": "screenshots/Screenshot1.png",
       "sizes": "1920x950",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Learn the HOS rules: duty statuses, daily limits, work shift and cycles"
     },
     {
-      "src": "screenshot2.png",
+      "src": "screenshots/Screenshot2.png",
       "sizes": "1920x970",
       "type": "image/png",
       "form_factor": "wide",
       "label": "The daily log grid with all four duty status lines"
     },
     {
-      "src": "screenshot3.png",
+      "src": "screenshots/Screenshot3.png",
       "sizes": "1920x941",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Draw the Log practice mode"
+    },
+    {
+      "src": "screenshots/Screenshot4.png",
+      "sizes": "1920x960",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/Screenshot5.png",
+      "sizes": "1920x974",
+      "type": "image/png",
+      "form_factor": "wide"
     }
   ]
 }

@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hours of Service Trainer</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111827">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
 :root{--bg:#0f1720;--panel:#17212c;--panel2:#1f2b38;--line:#2c3a49;--text:#e8eef5;--muted:#9fb0c2;--accent:#ffb020;--good:#3ddc97;--bad:#ff5d5d;}
 *{box-sizing:border-box}
@@ -608,6 +612,53 @@ function redraw(){
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redraw,80);});
 
 newSpot();newDraw();newCycle();redraw();
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js");});}</script>
+<!-- Gamache Apps unlock (key required outside the website demo) -->
+<script>
+(function () {
+  var APP = "HOS";                 // must match Stripe metadata "app" (letters only)
+  var APP_NAME = "Hours of Service Trainer";
+  var APP_PATH = "/MyHoursOfServiceApp";
+  var WEBSITE_PATH = "/MyGamacheAppsWebsite";
+  var BUY_URL = "https://gamache61.github.io/MyGamacheAppsWebsite/";
+  var SERVER = "https://gamache-downloads.gamacheapps.workers.dev";
+  var P = "gamache_" + APP + "_";
+  function get(k) { try { return localStorage.getItem(P + k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(P + k, v); } catch (e) {} }
+  if (get("unlocked") === "1") return;
+  try { if (window.self !== window.top) { var pp = window.parent.location.pathname; if (pp.indexOf(WEBSITE_PATH) === 0 || pp.indexOf(APP_PATH) === 0) return; } } catch (e) {}
+  var device = get("device");
+  if (!device) { device = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/[^a-zA-Z0-9-]/g, ""); set("device", device); }
+  var css = document.createElement("style");
+  css.textContent = "#gk-ov{position:fixed;inset:0;z-index:2147483647;background:#0b1118;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,sans-serif}#gk-card{background:#1a2532;color:#e8eef5;border-radius:16px;padding:26px;max-width:400px;width:100%;text-align:center;box-shadow:0 10px 40px #000a}#gk-card h2{margin:0 0 8px;font-size:1.35rem;color:#e8eef5}#gk-card p{margin:6px 0 14px;opacity:.85;line-height:1.4;color:#e8eef5}#gk-key{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #3a4a5c;background:#0f1720;color:#ffd166;font:600 1.15rem ui-monospace,Consolas,monospace;text-align:center;text-transform:uppercase;letter-spacing:1px}.gk-b{display:block;width:100%;margin-top:10px;padding:13px;border:0;border-radius:10px;font:600 1rem system-ui,sans-serif;cursor:pointer;text-decoration:none;box-sizing:border-box}#gk-go{background:#2f8cff;color:#fff}#gk-buy{background:#ffd166;color:#111}#gk-msg{min-height:1.2em;margin-top:10px;font-size:.9rem;color:#ff8a8a}";
+  document.head.appendChild(css);
+  var ov = document.createElement("div"); ov.id = "gk-ov";
+  ov.innerHTML = '<div id="gk-card"><h2>' + APP_NAME + '</h2><p>Enter the unlock key from your purchase page.</p><input id="gk-key" placeholder="' + APP + '-XXXX-XXXX" autocomplete="off" spellcheck="false"><button class="gk-b" id="gk-go">Unlock</button><a class="gk-b" id="gk-buy" href="' + BUY_URL + '" target="_blank" rel="noopener">Try the demo or buy ' + APP_NAME + '</a><div id="gk-msg"></div></div>';
+  function mount() {
+    document.body.appendChild(ov);
+    document.getElementById("gk-go").onclick = activate;
+    var kb = document.getElementById("gk-key");
+    kb.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Enter") activate(); });
+    kb.addEventListener("keyup", function (e) { e.stopPropagation(); });
+    kb.addEventListener("keypress", function (e) { e.stopPropagation(); });
+    setTimeout(function () { kb.focus(); }, 50);
+  }
+  function activate() {
+    var key = document.getElementById("gk-key").value.trim().toUpperCase().replace(/\s+/g, "");
+    var msg = document.getElementById("gk-msg");
+    if (!key) { msg.textContent = "Type your key first."; return; }
+    msg.style.color = "#9fb3c8"; msg.textContent = "Checking…";
+    fetch(SERVER + "/activate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: key, app: APP, device: device }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.ok) { set("unlocked", "1"); set("key", key); msg.style.color = "#7ee787"; msg.textContent = "Unlocked! Thank you."; setTimeout(function () { ov.remove(); }, 900); }
+        else { msg.style.color = "#ff8a8a"; msg.textContent = d.error || "That key didn't work."; }
+      })
+      .catch(function () { msg.style.color = "#ff8a8a"; msg.textContent = "No internet connection. Connect once to unlock — after that it works offline."; });
+  }
+  if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 })();
 </script>
 </body>
