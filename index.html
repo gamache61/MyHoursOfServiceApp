@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hours of Service Trainer</title>
+<style>
+:root{--bg:#0f1720;--panel:#17212c;--panel2:#1f2b38;--line:#2c3a49;--text:#e8eef5;--muted:#9fb0c2;--accent:#ffb020;--good:#3ddc97;--bad:#ff5d5d;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+header{padding:12px 16px;background:linear-gradient(180deg,#1c2836,#131c26);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.logo{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#1a1200;display:grid;place-items:center;font-weight:900;font-size:15px}
+header h1{font-size:19px;margin:0;line-height:1.1}
+header .brand{color:var(--muted);font-size:12px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+nav button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer;font-weight:600}
+nav button.on{background:var(--accent);color:#1a1200;border-color:var(--accent)}
+main{max-width:1060px;margin:0 auto;padding:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.panel h2{margin:0 0 6px;font-size:18px}
+.wrap{width:100%}
+canvas.log{width:100%;display:block;touch-action:none;border-radius:8px;user-select:none;-webkit-user-select:none}
+.btn{background:var(--accent);color:#1a1200;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:15px}
+.btn.alt{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin:6px 0;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--accent)}
+.checks label.right{border-color:var(--good)}
+.checks label.wrong{border-color:var(--bad)}
+.fb{padding:12px;border-radius:8px;margin-top:10px;line-height:1.5}
+.fb.good{background:rgba(61,220,151,.1);border:1px solid var(--good)}
+.fb.bad{background:rgba(255,93,93,.1);border:1px solid var(--bad)}
+.fb.info{background:rgba(255,176,32,.08);border:1px solid var(--accent)}
+.fb ol{margin:6px 0 0 18px;padding:0}
+.fb li{margin:4px 0}
+.events{font-size:14px;margin:8px 0 0;padding:0;list-style:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.events li{padding:7px 10px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;background:var(--panel2)}
+.events li:last-child{border-bottom:none}
+.events .tm{color:var(--accent);font-variant-numeric:tabular-nums;min-width:104px;font-weight:600}
+.tag{font-size:11px;padding:2px 7px;border-radius:4px;margin-left:auto;white-space:nowrap;font-weight:700;color:#0b121a}
+.context{font-size:14px;color:var(--muted);margin:6px 0 10px}
+.context b{color:var(--text)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card h3{margin:0 0 6px;color:var(--accent);font-size:16px}
+.card ul{margin:6px 0 0 18px;padding:0;line-height:1.55;font-size:15px}
+.card p{margin:6px 0;line-height:1.5;font-size:15px}
+.big{font-size:28px;font-weight:800;color:var(--text)}
+.score{color:var(--muted);font-size:14px}
+.tablewrap{overflow-x:auto}
+table.days{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+table.days td,table.days th{border:1px solid var(--line);padding:7px 6px;text-align:center;min-width:44px}
+table.days th{background:var(--panel2);color:var(--muted);font-weight:600}
+table.days td.zero{color:var(--good);font-weight:700}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.choices button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:14px;font-size:17px;font-weight:700;cursor:pointer}
+.choices button.right{border-color:var(--good);background:rgba(61,220,151,.15)}
+.choices button.wrong{border-color:var(--bad);background:rgba(255,93,93,.15)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.note{color:var(--muted);font-size:13px;line-height:1.5}
+.hidden{display:none!important}
+footer{max-width:1060px;margin:0 auto;padding:4px 14px 30px;color:var(--muted);font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">HOS</div>
+  <div>
+    <h1>Hours of Service Trainer</h1>
+    <div class="brand">Gamache Apps · Canadian federal rules (south of 60°)</div>
+  </div>
+  <nav>
+    <button data-tab="learn" class="on">Learn</button>
+    <button data-tab="spot">Spot the Violation</button>
+    <button data-tab="draw">Draw the Log</button>
+    <button data-tab="cycle">Cycle Check</button>
+  </nav>
+</header>
+
+<main>
+<!-- LEARN -->
+<section id="tab-learn">
+  <div class="panel">
+    <h2>The daily log</h2>
+    <p class="note">Every 24-hour day (midnight to midnight) is drawn on four lines. The line moves to whatever the driver is doing, and each line's hours are added up on the right. This example is a legal day.</p>
+    <div class="wrap"><canvas class="log" id="learnCanvas"></canvas></div>
+    <div class="legend" id="legend1"></div>
+  </div>
+  <div class="cards">
+    <div class="panel card">
+      <h3>The 4 duty statuses</h3>
+      <ul>
+        <li><b>Off duty</b>: relieved of all work and responsibility. Meals, rest, home, motel.</li>
+        <li><b>Sleeper berth</b>: resting in the truck's bunk.</li>
+        <li><b>Driving</b>: behind the wheel with the truck moving.</li>
+        <li><b>On duty (not driving)</b>: pre-trip and post-trip inspections, fuelling, loading, unloading, waiting at a dock, paperwork, chaining up.</li>
+      </ul>
+    </div>
+    <div class="panel card">
+      <h3>Daily limits</h3>
+      <ul>
+        <li>No driving after <b>13 hours of driving</b> in a day.</li>
+        <li>No driving after <b>14 hours on duty</b> in a day. On duty means driving plus on-duty, not-driving time.</li>
+        <li>At least <b>10 hours off duty</b> every day. Off-duty and sleeper berth time both count.</li>
+      </ul>
+    </div>
+    <div class="panel card">
+      <h3>The 30-minute rule</h3>
+      <p>Apart from the 8 consecutive hours, the rest of the 10 off-duty hours can be spread through the day, but only in <b>blocks of 30 minutes or more</b>.</p>
+      <p>A 15-minute coffee stop is still a break, but it <b>does not count</b> toward the 10 hours.</p>
+    </div>
+    <div class="panel card">
+      <h3>The work shift</h3>
+      <ul>
+        <li>A shift starts after <b>8 consecutive hours off duty</b>. No driving without that break first.</li>
+        <li>In a shift: no driving after <b>13 hours driving</b> or <b>14 hours on duty</b>.</li>
+        <li>No driving once <b>16 hours have passed</b> since the shift started. Breaks <b>do not stop</b> that clock.</li>
+        <li>Once any of these limits is reached, take 8 consecutive hours off before driving again.</li>
+      </ul>
+    </div>
+    <div class="panel card">
+      <h3>Cycles</h3>
+      <ul>
+        <li><b>Cycle 1:</b> no more than <b>70 hours on duty in any 7 days</b>.</li>
+        <li><b>Cycle 2:</b> no more than <b>120 hours in any 14 days</b>. After 70 hours on duty you need 24 consecutive hours off before driving again.</li>
+        <li>Reset: <b>36 hours off in a row</b> (Cycle 1) or <b>72 hours</b> (Cycle 2).</li>
+        <li>Every driver needs at least <b>24 consecutive hours off in every 14 days</b>.</li>
+      </ul>
+    </div>
+    <div class="panel card">
+      <h3>Hours left in the cycle</h3>
+      <p>For Cycle 1, add up the <b>last 6 days</b>. Take that from 70 to get the hours you can work tomorrow.</p>
+      <p>Each night the oldest day drops off and its hours come back.</p>
+      <p class="note">Example: the last 6 days add up to 62 hours, so 70 − 62 = 8 hours tomorrow.</p>
+    </div>
+    <div class="panel card">
+      <h3>Not covered in these drills</h3>
+      <p class="note">Sleeper-berth splitting, deferring 2 off-duty hours to the next day, emergency and adverse driving conditions, north of 60°, personal conveyance, and provincial differences. Check the full regulations (SOR/2005-313) and your carrier's policy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SPOT -->
+<section id="tab-spot" class="hidden">
+  <div class="panel">
+    <div class="row"><h2>Spot the Violation</h2><span class="spacer"></span><span class="score" id="spotScore"></span></div>
+    <div class="context" id="spotContext"></div>
+    <div class="wrap"><canvas class="log" id="spotCanvas"></canvas></div>
+    <div class="legend legendSet"></div>
+    <div class="row" style="margin-top:10px"><button class="btn alt" id="spotDetailsBtn">Show trip details</button></div>
+    <ul class="events hidden" id="spotEvents"></ul>
+  </div>
+  <div class="panel">
+    <h2>Which rules were broken?</h2>
+    <p class="note">Tick every rule that was broken. If the day is legal, leave them all blank.</p>
+    <div class="checks" id="spotChecks"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="spotCheckBtn">Check answer</button>
+      <button class="btn alt" id="spotNextBtn">Next log</button>
+    </div>
+    <div id="spotFb"></div>
+  </div>
+</section>
+
+<!-- DRAW -->
+<section id="tab-draw" class="hidden">
+  <div class="panel">
+    <div class="row"><h2>Draw the Log</h2><span class="spacer"></span><span class="score" id="drawScore"></span></div>
+    <p class="note">Read the driver's day, then draw it. Press on a line and drag across the hours to fill them. A single tap fills 15 minutes.</p>
+    <ul class="events" id="drawEvents"></ul>
+  </div>
+  <div class="panel">
+    <div class="wrap"><canvas class="log" id="drawCanvas"></canvas></div>
+    <div class="legend legendSet"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="drawCheckBtn">Check my log</button>
+      <button class="btn alt" id="drawHintBtn">Show statuses</button>
+      <button class="btn alt" id="drawAnswerBtn">Show answer</button>
+      <button class="btn alt" id="drawClearBtn">Clear</button>
+      <span class="spacer"></span>
+      <button class="btn alt" id="drawNextBtn">New day</button>
+    </div>
+    <div id="drawFb"></div>
+  </div>
+</section>
+
+<!-- CYCLE -->
+<section id="tab-cycle" class="hidden">
+  <div class="panel">
+    <div class="row"><h2>Cycle Check</h2><span class="spacer"></span><span class="score" id="cycleScore"></span></div>
+    <div class="context" id="cycleIntro"></div>
+    <div class="tablewrap" id="cycleTable"></div>
+    <p id="cycleQ" style="font-size:17px;font-weight:600;margin:14px 0 0"></p>
+    <div class="choices" id="cycleChoices"></div>
+    <div id="cycleFb"></div>
+    <div class="row" style="margin-top:12px"><button class="btn alt" id="cycleNextBtn">Next question</button></div>
+  </div>
+</section>
+</main>
+
+<footer>
+A learning aid based on the Canadian federal Commercial Vehicle Drivers Hours of Service Regulations (SOR/2005-313), south of 60°. It is not legal advice and does not replace the regulations, your ELD or your carrier's policy.<br>© Gamache Apps
+</footer>
+
+<script>
+(function(){
+"use strict";
+const ROWS=['Off Duty','Sleeper Berth','Driving','On Duty'];
+const SHORT=['OFF','SB','DR','ON'];
+const COLORS=['#5aa9ff','#b08cff','#ffb020','#3ddc97'];
+const SLOTS=96;
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const q4=x=>Math.round(x*4)/4;
+const rq=(a,b)=>q4(a+Math.random()*(b-a));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+function hm(h){const m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function clock(h){const m=Math.round(h*60);return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+function store(k,v){try{localStorage.setItem('hos_'+k,JSON.stringify(v));}catch(e){}}
+function load(k,d){try{const v=localStorage.getItem('hos_'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function totals(slots){const t=[0,0,0,0];slots.forEach(s=>t[s]+=.25);return t;}
+
+/* ---------- log drawing ---------- */
+function drawLog(cv,slots,o){
+  o=o||{};
+  const W=cv.parentElement.clientWidth||600;
+  const small=W<560;
+  const L=small?40:112,R=small?44:60,T=24,RH=small?34:40,B=4;
+  const H=T+RH*4+B;
+  const dpr=window.devicePixelRatio||1;
+  cv.style.height=H+'px';
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+  const gw=W-L-R,sx=gw/SLOTS;
+  cv._geo={L,R,T,RH,gw,sx};
+  c.fillStyle='#0b121a';c.fillRect(0,0,W,H);
+  const tot=totals(slots);
+  c.textBaseline='middle';
+  for(let r=0;r<4;r++){
+    const y=T+r*RH;
+    c.fillStyle=r%2?'#111b25':'#0e1720';c.fillRect(L,y,gw,RH);
+    c.fillStyle=COLORS[r];c.font=(small?'bold 11px ':'bold 13px ')+'system-ui,sans-serif';c.textAlign='left';
+    c.fillText(small?SHORT[r]:ROWS[r],6,y+RH/2);
+    c.fillStyle='#e8eef5';c.textAlign='right';c.font='bold '+(small?'11px ':'13px ')+'system-ui,sans-serif';
+    c.fillText(hm(tot[r]),W-6,y+RH/2);
+  }
+  if(o.shade){
+    c.fillStyle='rgba(255,176,32,.35)';
+    for(let i=0;i<SLOTS;i++) if(o.shade[i]) c.fillRect(L+i*sx,T,sx+.5,RH*4);
+  }
+  if(o.mismatch){
+    c.fillStyle='rgba(255,93,93,.30)';
+    for(let i=0;i<SLOTS;i++) if(o.mismatch[i]) c.fillRect(L+i*sx,T,sx+.5,RH*4);
+  }
+  for(let i=0;i<=SLOTS;i++){
+    const x=Math.round(L+i*sx)+.5;
+    if(i%4===0){
+      c.strokeStyle=(i%48===0)?'#6b7c8e':'#34455a';c.lineWidth=1;
+      c.beginPath();c.moveTo(x,T);c.lineTo(x,T+RH*4);c.stroke();
+    }else{
+      c.strokeStyle='#26354a';c.lineWidth=1;
+      const len=i%2===0?RH*.38:RH*.22;
+      for(let r=0;r<4;r++){c.beginPath();c.moveTo(x,T+r*RH);c.lineTo(x,T+r*RH+len);c.stroke();}
+    }
+  }
+  c.strokeStyle='#34455a';
+  for(let r=0;r<=4;r++){const y=T+r*RH+.5;c.beginPath();c.moveTo(L,y);c.lineTo(L+gw,y);c.stroke();}
+  c.fillStyle='#9fb0c2';c.font=(small?'10px ':'11px ')+'system-ui,sans-serif';c.textAlign='center';
+  const step=small?3:1;
+  for(let h=0;h<=24;h+=step){c.fillText(h===0||h===24?'Mid':h===12?'Noon':String(h),L+h*4*sx,T/2);}
+  if(o.ghost) traceLine(c,o.ghost,L,T,RH,sx,true);
+  traceLine(c,slots,L,T,RH,sx,false);
+  if(o.marks){
+    o.marks.forEach((m,k)=>{
+      const x=L+m.t*4*sx;
+      c.strokeStyle='#ff5d5d';c.lineWidth=2;c.setLineDash([4,3]);
+      c.beginPath();c.moveTo(x,T);c.lineTo(x,T+RH*4);c.stroke();c.setLineDash([]);
+      c.fillStyle='#ff5d5d';c.beginPath();c.arc(x,T+9,8,0,Math.PI*2);c.fill();
+      c.fillStyle='#fff';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText(String(k+1),x,T+9.5);
+    });
+  }
+}
+function traceLine(c,slots,L,T,RH,sx,ghost){
+  c.lineCap='round';
+  for(let i=0;i<SLOTS;i++){
+    const s=slots[i],y=T+s*RH+RH/2,x0=L+i*sx,x1=x0+sx;
+    if(i>0&&slots[i-1]!==s){
+      c.strokeStyle=ghost?'rgba(255,255,255,.5)':'#ffffff';c.lineWidth=ghost?2:2.5;c.setLineDash(ghost?[4,3]:[]);
+      c.beginPath();c.moveTo(x0,T+slots[i-1]*RH+RH/2);c.lineTo(x0,y);c.stroke();
+    }
+    c.strokeStyle=ghost?'rgba(255,255,255,.55)':COLORS[s];c.lineWidth=ghost?2:4;c.setLineDash(ghost?[4,3]:[]);
+    c.beginPath();c.moveTo(x0,y);c.lineTo(x1,y);c.stroke();
+  }
+  c.setLineDash([]);
+}
+function legendHTML(){return ROWS.map((r,i)=>`<span><i style="background:${COLORS[i]}"></i>${r}</span>`).join('');}
+document.querySelectorAll('.legendSet').forEach(e=>e.innerHTML=legendHTML());
+$('legend1').innerHTML=legendHTML();
+
+/* ---------- rule checker ---------- */
+const VIOL={
+  REST8:{name:'Drove without 8 consecutive hours off before the shift'},
+  DRIVE13:{name:'Drove after 13 hours of driving'},
+  ON14:{name:'Drove after 14 hours on duty'},
+  ELAPSED16:{name:'Drove after 16 hours had passed since the shift started'},
+  OFF10:{name:'Less than 10 hours of off-duty time that counts (breaks under 30 min don\'t count)'}
+};
+const VORDER=['REST8','DRIVE13','ON14','ELAPSED16','OFF10'];
+
+function analyze(slots,prevOff){
+  const v={};
+  const mark=(k,d)=>{if(!(k in v)) v[k]=d;};
+  let consec=prevOff,inShift=false,start=0,drv=0,on=0,shortRest=false,restBefore=0,dayDrv=0,dayOn=0;
+  for(let i=0;i<SLOTS;i++){
+    const s=slots[i],t=i/4;
+    if(s<=1){consec+=.25;if(inShift&&consec>=8) inShift=false;continue;}
+    if(!inShift){inShift=true;start=t;drv=0;on=0;shortRest=consec<8;restBefore=consec;}
+    consec=0;
+    if(s===2){
+      if(shortRest) mark('REST8',{t:start,rest:restBefore});
+      if(drv>=13||dayDrv>=13) mark('DRIVE13',{t});
+      if(on>=14||dayOn>=14) mark('ON14',{t});
+      if(t-start>=16) mark('ELAPSED16',{t,start});
+      drv+=.25;dayDrv+=.25;
+    }
+    on+=.25;dayOn+=.25;
+  }
+  let counted=0,shortOff=0,i=0;
+  while(i<SLOTS){
+    if(slots[i]<=1){
+      let j=i;while(j<SLOTS&&slots[j]<=1) j++;
+      const len=(j-i)/4;
+      if(len>=.5||i===0||j===SLOTS) counted+=len; else shortOff+=len;
+      i=j;
+    }else i++;
+  }
+  const shortSlots=new Array(SLOTS).fill(false);
+  i=0;
+  while(i<SLOTS){
+    if(slots[i]<=1){let j=i;while(j<SLOTS&&slots[j]<=1) j++;
+      if(!((j-i)/4>=.5||i===0||j===SLOTS)) for(let k=i;k<j;k++) shortSlots[k]=true;
+      i=j;}else i++;
+  }
+  if(counted<10) mark('OFF10',{counted,shortOff});
+  return {v,counted,shortOff,shortSlots};
+}
+function explain(k,d){
+  switch(k){
+    case 'REST8':return `The driver was off for only <b>${hm(d.rest)}</b> in a row (including time before midnight) before starting work at <b>${clock(d.t)}</b>. Off duty and sleeper berth both count, but 8 consecutive hours are needed before driving.`;
+    case 'DRIVE13':return `By <b>${clock(d.t)}</b> the driver had already driven 13 hours. Any driving after that is a violation.`;
+    case 'ON14':return `By <b>${clock(d.t)}</b> the driver had 14 hours on duty (driving plus on-duty time). Driving after that is a violation.`;
+    case 'ELAPSED16':return `The shift started at <b>${clock(d.start)}</b>, so 16 hours had passed by <b>${clock(d.t)}</b>. Breaks do not stop this clock. No driving after that until 8 consecutive hours off.`;
+    case 'OFF10':return `The log shows <b>${hm(d.counted+d.shortOff)}</b> off duty (off duty + sleeper berth), but only <b>${hm(d.counted)}</b> counts${d.shortOff>0?`. The <b>${hm(d.shortOff)}</b> shaded yellow was taken in breaks shorter than 30 minutes, and those don't count toward the 10 hours`:''}. At least 10 counted hours are needed.`;
+  }
+  return '';
+}
+
+/* ---------- day generator ---------- */
+const ROUTES=[
+ ['Delta','Abbotsford','Hope','Merritt','Kamloops','Salmon Arm','Revelstoke','Golden','Field','Canmore','Calgary'],
+ ['Surrey','Chilliwack','Hope','Princeton','Keremeos','Osoyoos','Rock Creek','Grand Forks','Castlegar','Creston','Cranbrook'],
+ ['Prince George','Quesnel','Williams Lake','100 Mile House','Cache Creek','Lytton','Hope','Chilliwack','Langley','Richmond','Delta'],
+ ['Valemount','Clearwater','Kamloops','Vernon','Kelowna','Penticton','Osoyoos','Princeton','Merritt','Hope','Abbotsford'],
+ ['Fort St. John','Dawson Creek','Chetwynd','Mackenzie','Prince George','Vanderhoof','Burns Lake','Houston','Smithers','Terrace','Prince Rupert']
+];
+const PARAMS={
+  NONE:{drive:[6,12.5],brk:[0.5,1],load:[0.5,1.5]},
+  DRIVE13:{drive:[13.25,14.5],brk:[0.5,0.75],load:[0.25,0.5]},
+  ON14:{drive:[10.5,12.75],brk:[0.5,0.75],load:[1.5,3]},
+  ELAPSED16:{drive:[9,12],brk:[1,3],load:[0.5,1.5]},
+  OFF10:{drive:[9.5,12],brk:[0.25,0.25],load:[0.75,2]},
+  REST8:{drive:[6,11],brk:[0.5,1],load:[0.5,1.5]}
+};
+function buildRandom(target){
+  const P=PARAMS[target];
+  let prevOff,start;
+  if(target==='REST8'){
+    prevOff=pick([2,3,4,5]);start=rq(0.5,Math.min(7.5-prevOff,4.5));
+    if(start<0.25||prevOff+start>=8) return null;
+  }else{
+    prevOff=pick([2,3,4,5,6]);start=rq(Math.max(3.5,8-prevOff),8.5);
+  }
+  let route=pick(ROUTES);if(Math.random()<.5) route=route.slice().reverse();
+  const ev=[];let t=start;
+  if(start>0){const sb=Math.random()<.4;ev.push({s:0,e:start,st:sb?1:0,label:sb?'Sleeping in the bunk':'Off duty: home / motel'});}
+  const pre=pick([0.25,0.5]);ev.push({s:t,e:t+pre,st:3,label:'Pre-trip inspection'});t+=pre;
+  let driveLeft=rq(P.drive[0],P.drive[1]),ci=0,loaded=false;
+  while(driveLeft>0.001){
+    let leg=Math.min(driveLeft,rq(1.5,4.5));if(driveLeft-leg<0.75) leg=driveLeft;
+    const lab=ci+1<route.length?`Drove ${route[ci]} → ${route[ci+1]}`:'Drove: local deliveries';
+    ev.push({s:t,e:t+leg,st:2,label:lab});t+=leg;driveLeft=q4(driveLeft-leg);ci++;
+    if(driveLeft<=0.001) break;
+    const r=Math.random();
+    if(!loaded&&(target==='ON14'||r<.45)){
+      const Ld=rq(P.load[0],P.load[1]);
+      ev.push({s:t,e:t+Ld,st:3,label:pick(['Loading at the shipper','Unloading at the receiver','Waiting at the dock (on duty)','Dropping and hooking trailers'])});
+      t+=Ld;loaded=target==='ON14'?Math.random()<.35:true;
+    }else if(r<.75){
+      const f=pick([0.25,0.5]);ev.push({s:t,e:t+f,st:3,label:pick(['Fuelling up','Fuelling and checking tires','Chaining up','Scale inspection'])});t+=f;
+    }
+    if(Math.random()<.8||target==='ELAPSED16'||target==='OFF10'){
+      const b=rq(P.brk[0],P.brk[1]);
+      ev.push({s:t,e:t+b,st:0,label:b<.5?'Coffee stop (off duty)':pick(['Lunch break (off duty)','Meal break (off duty)','Rest break (off duty)'])});t+=b;
+    }
+  }
+  if(target!=='DRIVE13'&&Math.random()<.45){const u=rq(.5,1.5);ev.push({s:t,e:t+u,st:3,label:'Unloading at the receiver'});t+=u;}
+  ev.push({s:t,e:t+.25,st:3,label:'Post-trip inspection and paperwork'});t+=.25;
+  if(t>24) return null;
+  if(t<24){const sb=t>17&&Math.random()<.6;ev.push({s:t,e:24,st:sb?1:0,label:sb?'Sleeping in the bunk':'Off duty for the night'});}
+  const slots=new Array(SLOTS).fill(0);
+  ev.forEach(e=>{for(let i=Math.round(e.s*4);i<Math.round(e.e*4);i++) slots[i]=e.st;});
+  const merged=[];
+  ev.forEach(e=>{if(e.e-e.s<=0) return;merged.push(e);});
+  return {prevOff,ev:merged,slots};
+}
+function genDay(target){
+  for(let k=0;k<8000;k++){
+    const d=buildRandom(target);if(!d) continue;
+    const a=analyze(d.slots,d.prevOff);const keys=Object.keys(a.v);
+    if(target==='NONE'?keys.length===0:(keys.includes(target)&&keys.length<=2)){d.a=a;return d;}
+  }
+  for(;;){const d=buildRandom('NONE');if(d){d.a=analyze(d.slots,d.prevOff);return d;}}
+}
+function eventsHTML(ev,showTags){
+  return ev.map(e=>`<li><span class="tm">${clock(e.s)}–${clock(e.e)}</span><span>${e.label}</span>${showTags?`<span class="tag" style="background:${COLORS[e.st]}">${ROWS[e.st]}</span>`:''}</li>`).join('');
+}
+
+/* ---------- tabs ---------- */
+let current='learn';
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  current=b.dataset.tab;
+  ['learn','spot','draw','cycle'].forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==current));
+  redraw();window.scrollTo(0,0);
+}));
+
+/* ---------- learn ---------- */
+const learnSlots=(()=>{const s=new Array(SLOTS).fill(0);
+  const set=(a,b,v)=>{for(let i=a*4;i<b*4;i++) s[i]=v;};
+  set(0,5.5,1);set(5.5,6,3);set(6,9.5,2);set(9.5,10.25,3);set(10.25,11,0);set(11,14,2);set(14,14.5,3);set(14.5,15.25,0);set(15.25,17.5,2);set(17.5,17.75,3);set(17.75,24,1);return s;})();
+
+/* ---------- spot ---------- */
+let spot=null,spotAnswered=false,spotShowEvents=false,spotMarks=null,spotShade=null;
+let spotScore=load('spot',{r:0,t:0});
+function newSpot(){
+  const tg=pick(['NONE','DRIVE13','ON14','ELAPSED16','OFF10','REST8']);
+  spot=genDay(tg);spotAnswered=false;spotMarks=null;spotShade=null;
+  $('spotChecks').innerHTML=VORDER.map(k=>`<label data-k="${k}"><input type="checkbox" value="${k}"><span>${VIOL[k].name}</span></label>`).join('');
+  $('spotFb').innerHTML='';
+  $('spotContext').innerHTML=`Before midnight the driver had already been off duty for <b>${hm(spot.prevOff)}</b> in a row.`;
+  $('spotEvents').innerHTML=eventsHTML(spot.ev,true);
+  $('spotCheckBtn').disabled=false;
+  updSpotScore();redraw();
+}
+function updSpotScore(){$('spotScore').textContent=`Score: ${spotScore.r} / ${spotScore.t}`;}
+$('spotDetailsBtn').onclick=()=>{spotShowEvents=!spotShowEvents;$('spotEvents').classList.toggle('hidden',!spotShowEvents);$('spotDetailsBtn').textContent=spotShowEvents?'Hide trip details':'Show trip details';};
+$('spotCheckBtn').onclick=()=>{
+  if(spotAnswered) return;spotAnswered=true;$('spotCheckBtn').disabled=true;
+  const picked=[...document.querySelectorAll('#spotChecks input:checked')].map(i=>i.value);
+  const actual=VORDER.filter(k=>k in spot.a.v);
+  const ok=picked.length===actual.length&&picked.every(k=>actual.includes(k));
+  spotScore.t++;if(ok) spotScore.r++;store('spot',spotScore);updSpotScore();
+  document.querySelectorAll('#spotChecks label').forEach(l=>{
+    const k=l.dataset.k,inA=actual.includes(k),inP=picked.includes(k);
+    l.querySelector('input').disabled=true;
+    if(inA) l.classList.add('right'); else if(inP) l.classList.add('wrong');
+  });
+  spotMarks=actual.filter(k=>k!=='OFF10').map(k=>({t:spot.a.v[k].t,k}));
+  spotShade=spot.a.shortOff>0?spot.a.shortSlots:null;
+  let html=`<div class="fb ${ok?'good':'bad'}"><b>${ok?'Correct!':'Not quite.'}</b> `;
+  if(!actual.length) html+='This log is legal. No rules were broken.';
+  else{
+    html+=actual.length===1?'One rule was broken:':`${actual.length} rules were broken:`;
+    html+='<ol>'+actual.map(k=>{const n=spotMarks.findIndex(m=>m.k===k);return `<li>${n>=0?`<b style="color:#ff5d5d">[${n+1}]</b> `:''}<b>${VIOL[k].name}.</b> ${explain(k,spot.a.v[k])}</li>`;}).join('')+'</ol>';
+  }
+  const tot=totals(spot.slots);
+  html+=`<div class="note" style="margin-top:6px">Day totals: driving ${hm(tot[2])}, on duty ${hm(tot[2]+tot[3])}, off duty on the log ${hm(tot[0]+tot[1])}, off duty that counts ${hm(spot.a.counted)}${spot.a.shortOff>0?` (${hm(spot.a.shortOff)} in breaks under 30 min, shaded yellow)`:''}.</div></div>`;
+  $('spotFb').innerHTML=html;redraw();
+};
+$('spotNextBtn').onclick=newSpot;
+
+/* ---------- draw ---------- */
+let dday=null,user=null,drawMismatch=null,drawGhost=false,drawHint=false;
+let drawScore=load('draw',{r:0,t:0});
+function newDraw(){
+  dday=genDay(pick(['NONE','NONE','DRIVE13','ON14','ELAPSED16','OFF10','REST8']));
+  user=new Array(SLOTS).fill(0);drawMismatch=null;drawGhost=false;drawHint=false;
+  $('drawHintBtn').textContent='Show statuses';$('drawAnswerBtn').textContent='Show answer';
+  $('drawEvents').innerHTML=eventsHTML(dday.ev,false);$('drawFb').innerHTML='';
+  updDrawScore();redraw();
+}
+function updDrawScore(){$('drawScore').textContent=`Perfect logs: ${drawScore.r} / ${drawScore.t}`;}
+$('drawHintBtn').onclick=()=>{drawHint=!drawHint;$('drawEvents').innerHTML=eventsHTML(dday.ev,drawHint);$('drawHintBtn').textContent=drawHint?'Hide statuses':'Show statuses';};
+$('drawAnswerBtn').onclick=()=>{drawGhost=!drawGhost;$('drawAnswerBtn').textContent=drawGhost?'Hide answer':'Show answer';redraw();};
+$('drawClearBtn').onclick=()=>{user.fill(0);drawMismatch=null;$('drawFb').innerHTML='';redraw();};
+$('drawNextBtn').onclick=newDraw;
+$('drawCheckBtn').onclick=()=>{
+  drawMismatch=user.map((s,i)=>s!==dday.slots[i]);
+  const bad=drawMismatch.filter(Boolean).length;
+  drawScore.t++;if(!bad) drawScore.r++;store('draw',drawScore);updDrawScore();
+  const ut=totals(user),at=totals(dday.slots);
+  let html=`<div class="fb ${bad?'bad':'good'}"><b>${bad?`${hm(bad/4)} of the day is drawn wrong`:'Perfect log!'}</b>${bad?' (shaded red).':''}`;
+  html+=`<div class="note" style="margin-top:6px">${ROWS.map((r,i)=>`${r}: yours ${hm(ut[i])}, correct ${hm(at[i])}`).join(' · ')}</div>`;
+  const actual=VORDER.filter(k=>k in dday.a.v);
+  html+=`<div style="margin-top:8px"><b>Bonus:</b> ${actual.length?'this day breaks '+actual.map(k=>VIOL[k].name.toLowerCase()).join('; ')+'.':'this day is legal.'}</div></div>`;
+  $('drawFb').innerHTML=html;redraw();
+};
+(function(){
+  const cv=$('drawCanvas');let drag=null;
+  function pos(e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+  function slotAt(x){const g=cv._geo;return Math.max(0,Math.min(SLOTS-1,Math.floor((x-g.L)/g.sx)));}
+  function apply(sl){
+    const a=Math.min(drag.anchor,sl),b=Math.max(drag.anchor,sl);
+    user=drag.base.slice();for(let i=a;i<=b;i++) user[i]=drag.row;
+    drawMismatch=null;redraw();
+  }
+  cv.addEventListener('pointerdown',e=>{
+    const g=cv._geo;if(!g) return;const p=pos(e);
+    const row=Math.floor((p.y-g.T)/g.RH);
+    if(row<0||row>3||p.x<g.L-6||p.x>g.L+g.gw+6) return;
+    e.preventDefault();
+    drag={row,anchor:slotAt(p.x),base:user.slice()};
+    try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    apply(drag.anchor);
+  });
+  cv.addEventListener('pointermove',e=>{if(!drag) return;apply(slotAt(pos(e).x));});
+  const end=()=>{drag=null;};
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+})();
+
+/* ---------- cycle ---------- */
+let cyc=null,cycAnswered=false;
+let cycScore=load('cycle',{r:0,t:0});
+const rh=(a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
+const sum=a=>a.reduce((x,y)=>x+y,0);
+function newCycle(){
+  cycAnswered=false;$('cycleFb').innerHTML='';
+  const type=Math.random()<.7?'avail':'off24';
+  if(type==='avail'){
+    const c2=Math.random()<.3,n=c2?14:7,limit=c2?120:70;
+    let days,ans;
+    for(let k=0;k<5000;k++){
+      days=Array.from({length:n},()=>Math.random()<(c2?.2:.12)?0:rh(c2?6:8,c2?12.5:14));
+      if(sum(days)>limit) continue;
+      if(c2){let run=0,okRun=true;for(const d of days){if(d===0) run=0; else {run+=d;if(run>70) okRun=false;}}if(!okRun) continue;}
+      ans=limit-sum(days.slice(1));
+      if(ans>=0&&ans<=(c2?24:22)) break;
+    }
+    const opts=new Set([ans]);
+    [limit-sum(days),limit-sum(days.slice(0,n-1)),ans+pick([1.5,2,3]),Math.max(0,ans-pick([1,2.5,3])),14,ans+days[0]/2]
+      .forEach(x=>{x=Math.round(x*2)/2;if(x>=0&&opts.size<4) opts.add(x);});
+    while(opts.size<4) opts.add(Math.round((ans+opts.size*1.5+1)*2)/2);
+    cyc={type,c2,n,limit,days,ans,opts:shuffle([...opts])};
+    $('cycleIntro').innerHTML=`The driver is on <b>Cycle ${c2?2:1}</b> (${limit} hours in ${n} days). Here are the on-duty hours for the last ${n} days. 0 means a full day off.`;
+    $('cycleQ').textContent=`How many on-duty hours does the driver have left in the cycle for Day ${n+1}?`;
+    $('cycleChoices').innerHTML=cyc.opts.map(v=>`<button data-v="${v}">${hm(v)}</button>`).join('');
+  }else{
+    const n=14,has=Math.random()<.5;
+    let days;
+    for(;;){
+      days=Array.from({length:n},()=>rh(6,12.5));
+      if(has){const z=Math.floor(Math.random()*n);days[z]=0;if(Math.random()<.3) days[(z+3+Math.floor(Math.random()*8))%n]=0;}
+      if(sum(days)<=120||!has) break;
+    }
+    cyc={type,n,days,ans:has?'yes':'no',opts:['yes','no']};
+    $('cycleIntro').innerHTML=`On-duty hours for the last 14 days. 0 means a full day off. On work days, assume the driver only took normal overnight rest (less than 24 hours).`;
+    $('cycleQ').textContent='Has the driver taken at least 24 consecutive hours off in the last 14 days?';
+    $('cycleChoices').innerHTML=`<button data-v="yes">Yes</button><button data-v="no">No</button>`;
+  }
+  $('cycleTable').innerHTML=`<table class="days"><tr><th>Day</th>${cyc.days.map((_,i)=>`<th>${i+1}</th>`).join('')}</tr><tr><th>Hours</th>${cyc.days.map(d=>`<td class="${d===0?'zero':''}">${hm(d)}</td>`).join('')}</tr></table>`;
+  document.querySelectorAll('#cycleChoices button').forEach(b=>b.onclick=()=>answerCycle(b));
+  updCycScore();
+}
+function updCycScore(){$('cycleScore').textContent=`Score: ${cycScore.r} / ${cycScore.t}`;}
+function answerCycle(btn){
+  if(cycAnswered) return;cycAnswered=true;
+  const val=cyc.type==='avail'?parseFloat(btn.dataset.v):btn.dataset.v;
+  const ok=val===cyc.ans;
+  cycScore.t++;if(ok) cycScore.r++;store('cycle',cycScore);updCycScore();
+  document.querySelectorAll('#cycleChoices button').forEach(b=>{
+    const v=cyc.type==='avail'?parseFloat(b.dataset.v):b.dataset.v;
+    if(v===cyc.ans) b.classList.add('right'); else if(b===btn) b.classList.add('wrong');
+  });
+  let html=`<div class="fb ${ok?'good':'bad'}"><b>${ok?'Correct!':'Not quite.'}</b> `;
+  if(cyc.type==='avail'){
+    const last=cyc.days.slice(1),s=sum(last);
+    html+=`On Day ${cyc.n+1}, Day 1 drops out of the ${cyc.n}-day window. Add Days 2–${cyc.n}: <b>${hm(s)}</b>. Then ${cyc.limit} − ${hm(s)} = <b>${hm(cyc.ans)}</b>.`;
+    if(cyc.ans>14) html+=` The daily limit still applies, so the driver can do at most 14 hours on duty that day.`;
+    if(cyc.ans===0) html+=` The driver has no hours left and needs a ${cyc.c2?'72':'36'}-hour reset or must wait for older days to drop off.`;
+  }else{
+    html+=cyc.ans==='yes'?`A day with 0 hours is 24+ hours off in a row, so the rule is met.`:`There is no full day off in the last 14 days. The driver must take 24 consecutive hours off before driving again.`;
+  }
+  $('cycleFb').innerHTML=html+'</div>';
+}
+$('cycleNextBtn').onclick=newCycle;
+
+/* ---------- redraw ---------- */
+function redraw(){
+  if(current==='learn') drawLog($('learnCanvas'),learnSlots);
+  if(current==='spot'&&spot) drawLog($('spotCanvas'),spot.slots,{marks:spotMarks,shade:spotShade});
+  if(current==='draw'&&dday) drawLog($('drawCanvas'),user,{mismatch:drawMismatch,ghost:drawGhost?dday.slots:null});
+}
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redraw,80);});
+
+newSpot();newDraw();newCycle();redraw();
+})();
+</script>
+</body>
+</html>
